@@ -1,0 +1,12 @@
+tsv_submissions:
+  - output_a_j-utf8.txt
+  - output_b_j-utf8.txt
+  - output_c_j-utf8.txt
+  - output_d_j-utf8.txt
+  - output_a_e-utf8.txt
+  - output_b_e-utf8.txt
+  - output_c_e-utf8.txt
+  - output_d_e-utf8.txt
+ja_tsv_output: final_ja.txt
+en_ja_tsv_output: final_en_ja.txt
+en_tsv_output: final_en.txt
