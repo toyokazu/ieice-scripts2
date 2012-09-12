@@ -185,12 +185,13 @@ $papers.each do |paper_id|
     authors_with_affiliations << "#{author}#{membernum(s)}#{orgname(s)}"
   end
   output_paper($output_file, paper, authors_with_affiliations.join("；"))
+
   if $target == 'ja' && !en_ja_paper.nil?
     if en_ja_authors.size != authors.size
       $stderr.puts "the number of ja/en author list does not match @#{paper_id}"
       $stderr.puts "ja metadata: #{authors.join("＠")}"
       $stderr.puts "en metadata: #{en_ja_authors.join("＠")}"
-      output_paper($output_file, en_ja_paper, authors(en_ja_paper).join("；"))
+      output_paper($en_ja_output_file, en_ja_paper, authors(en_ja_paper).join("；"))
       next
     end
     en_ja_authors_with_affiliations = []
@@ -208,4 +209,13 @@ $rest_papers = $db.execute("select * from #{$metadata} where id not in (select p
 # output the rest of papers exactly as it was
 $rest_papers.each do |paper|
   output_paper($output_file, paper, authors(paper).join("；"))
+end
+$output_file.close
+
+if $target == 'ja'
+  $en_ja_rest_papers = $db.execute("select * from #{$en_ja_metadata} where id not in (select paper_id from #{$submissions} where paper_id != 'NO_PAGES' and paper_id != 'NO_VOLUME' group by paper_id order by paper_id asc) order by id;")
+  $en_ja_rest_papers.each do |en_ja_paper|
+    output_paper($en_ja_output_file, en_ja_paper, authors(en_ja_paper).join("；"))
+  end
+  $en_ja_output_file.close
 end

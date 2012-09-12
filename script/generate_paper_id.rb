@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 require 'yaml'
-require 'sqlite3'
 
 ROOT_PATH = File.expand_path('../../',  __FILE__)
 config_path = "#{ROOT_PATH}/config/tsv_files.yml"

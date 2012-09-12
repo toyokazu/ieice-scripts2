@@ -98,6 +98,8 @@ RVM が依存するパッケージをインストールします．
     % git clone https://github.com/toyokazu/ieice-scripts2.git
     % cd ieice-scripts2
 
+以上でインストールは完了です．
+
 ## コマンドリスト
 
 以下 ieice-scripts2 に含まれるコマンド群の利用方法について説明します．
@@ -138,9 +140,21 @@ RVM が依存するパッケージをインストールします．
 
 準備ができたら，以下のようにコマンドを実行します．
 
-    % ./script/import_databases.rb
+    % ./script/import_databases.rb 2> logs/import_logs.txt
     % ./script/output_merged_tsv.rb ja 2> logs/ja_logs.txt
     % ./script/output_merged_tsv.rb en 2> logs/en_logs.txt
+
+以上で，files ディレクトリ以下に final_xxx.txt が出力されます．
+
+ログファイルをWindowsで読みやすくするためには ShiftJIS への変換が必要です．
+
+    % ./script/nkf.rb -WsLw logs/ja_logs.txt > logs/ja_logs-win.txt
+
+なお，生成したファイルを一旦削除して生成しなおすには，
+
+    % ./script/clear_databases.rb
+
+で削除を行います．
 
 ## generate_paper_id.rb
 
