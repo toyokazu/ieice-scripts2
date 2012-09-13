@@ -105,12 +105,22 @@ def authors(metadata)
   metadata[15].gsub("　", " ").gsub(/\s+/, " ").split("＠")
 end
 
+def normalize(name)
+  names = name.split(" ").map {|s| s.capitalize}
+  # if name is empty (""), return itself ("").
+  if names[-1].nil?
+    return name
+  end
+  names[-1] = names[-1].upcase
+  names.join(" ")
+end
+
 def authorname(submission, target = $target)
   case target
   when 'ja'
-    submission[13].gsub("　", " ").gsub(/\s+/, " ")
+    normalize(submission[13].gsub("　", " ").gsub(/\s+/, " "))
   when 'en'
-    submission[14].gsub("　", " ").gsub(/\s+/, " ")
+    normalize(submission[14].gsub("　", " ").gsub(/\s+/, " "))
   end
 end
 
