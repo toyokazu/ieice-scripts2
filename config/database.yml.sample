@@ -1,1 +1,1 @@
-database: papers.sqlite3
+paper_db: papers.sqlite3

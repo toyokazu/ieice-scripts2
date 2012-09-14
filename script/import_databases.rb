@@ -17,8 +17,8 @@ $sh = Shell.new
 $sh.transact do
   cd("#{ROOT_PATH}/files")
   system("#{ROOT_PATH}/script/generate_paper_id.rb")
-  system("sqlite3 #{$config["database"]} < #{ROOT_PATH}/script/createtable_paper_submissions.sql")
-  system("sqlite3 #{$config["database"]} < #{ROOT_PATH}/script/import_and_convert_paper_submissions.sql")
-  system("sqlite3 #{$config["database"]} < #{ROOT_PATH}/script/createtable_paper_metadata.sql")
-  system("sqlite3 #{$config["database"]} < #{ROOT_PATH}/script/import_and_convert_paper_metadata.sql")
+  system("sqlite3 #{$config["paper_db"]} < #{ROOT_PATH}/script/createtable_paper_submissions.sql")
+  system("sqlite3 #{$config["paper_db"]} < #{ROOT_PATH}/script/import_and_convert_paper_submissions.sql")
+  system("sqlite3 #{$config["paper_db"]} < #{ROOT_PATH}/script/createtable_paper_metadata.sql")
+  system("sqlite3 #{$config["paper_db"]} < #{ROOT_PATH}/script/import_and_convert_paper_metadata.sql")
 end

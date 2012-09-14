@@ -46,7 +46,7 @@ else
   error_and_exit
 end
 
-$db = SQLite3::Database.new("#{ROOT_PATH}/files/#{$db_config["database"]}")
+$db = SQLite3::Database.new("#{ROOT_PATH}/files/#{$db_config["paper_db"]}")
 
 # *_paper_submissions schema
 # 0: id1　　　　受付番号の西暦部分

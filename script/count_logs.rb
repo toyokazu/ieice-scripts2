@@ -16,6 +16,5 @@ $config = YAML.load_file(config_path)
 $sh = Shell.new
 $sh.transact do
   cd("#{ROOT_PATH}/files")
-  system("rm *-with_paper_id.txt")
-  system("rm #{$config["paper_db"]}")
+  system("sqlite3 #{$config["log_db"]} < #{ROOT_PATH}/script/count_logs.sql > downloads_count.txt")
 end

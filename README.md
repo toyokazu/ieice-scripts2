@@ -100,11 +100,11 @@ RVM が依存するパッケージをインストールします．
 
 以上でインストールは完了です．
 
-## コマンドリスト
+## ieice-scripts2 の利用方法
 
 以下 ieice-scripts2 に含まれるコマンド群の利用方法について説明します．
 
-### 利用手順
+### 投稿論文管理システムならびに論文誌検索システムデータ名寄せコマンドの利用手順
 
 まず設定ファイルを作成します．
 
@@ -156,11 +156,11 @@ RVM が依存するパッケージをインストールします．
 
 で削除を行います．
 
-## generate_paper_id.rb
+### generate_paper_id.rb
 
 投稿論文管理システムからの入力ファイル (TSV, UTF-8) を読み込み，volume1 の項目から paper_id を生成して付与します．import_databases.rb から呼び出されます．
 
-## import_databases.rb
+### import_databases.rb
 
 以下のような処理を実行します．
 
@@ -170,6 +170,11 @@ RVM が依存するパッケージをインストールします．
 * データベースのインデックス生成
 
 内部で，generate_paper_id.rb, createtable_xxx.sql, import_and_convert_xxx.sql を呼び出しています．
+
+### output_merged_tsv.rb
+
+* import_databases.rb で生成したDBから，著者名リストに所属をマージしたTSVを出力する
+* オプションに ja または en を指定することで，和文論文誌，英文論文誌それぞれのデータを出力する．なお，和文論文誌データ処理時には，和文論文誌の英文データについても同時に出力する．
 
 ### 入出力フォーマット
 
@@ -233,7 +238,7 @@ TSV, Unicode UTF-8 で出力します．前述のとおり，和文誌の日本�
     # 27: recommend, 推薦論文
     # 28: 目次脚注正誤PDF
 
-なお，名寄せ後の著者欄は以下の様な出力になります．
+なお，名寄せ後の著者名【表示用】は以下の様な出力になります(【検索用】は元のままです)．
 
     著者氏名1（著者会員番号1）＠著者所属1；著者氏名2＠著者所属2；著者氏名3（著者会員番号3）＠著者所属3；著者氏名4；著者氏名5（著者会員番号5）；...
 
@@ -241,6 +246,18 @@ TSV, Unicode UTF-8 で出力します．前述のとおり，和文誌の日本�
 
 投稿論文管理システムから取得できるデータは，基本的に vol, no, pp の情報で照合できるため，これらの情報がない場合は名寄せしません．
 
+### 論文誌検索システムでの論文のダウンロード回数集計スクリプトの利用手順
+
+    % ./script/import_logs.rb 2> logs/log_import_log.txt
+    % ./script/count_logs.rb 2> logs/log_count_log.txt
+
+「ファイル名|ダウンロード回数」というフォーマットで files/downloads_count.txt に結果が出力されます．
+
+なお，生成したファイルを一旦削除して生成しなおすには，
+
+    % ./script/clear_logs.rb
+
+で削除を行います．
 
 ## License (MIT License)
 Copyright (C) 2012 by Toyokazu Akiyama.
