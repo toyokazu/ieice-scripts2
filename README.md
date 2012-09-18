@@ -138,6 +138,12 @@ RVM が依存するパッケージをインストールします．
 
     % ./script/nkf.rb -Sw files/output_a_j.txt > files/output_a_j-utf8.txt
 
+output_a-d_e|j.txt という名称のファイルを一気に nkf で変換したい場合は，以下のコマンドを利用します．
+
+    % ./script/preproc.rb
+
+変換する対象ファイル名については，config/preproc.yml に指定します．config/preproc.yml.sample をコピーして利用してください．
+
 準備ができたら，以下のようにコマンドを実行します．
 
     % ./script/import_databases.rb 2> logs/import_logs.txt
@@ -237,6 +243,7 @@ TSV, Unicode UTF-8 で出力します．前述のとおり，和文誌の日本�
     # 26: err_2, 訂正先ファイル名
     # 27: recommend, 推薦論文
     # 28: 目次脚注正誤PDF
+    # 29: comment, 名寄せ結果
 
 なお，名寄せ後の著者名【表示用】は以下の様な出力になります(【検索用】は元のままです)．
 
@@ -245,6 +252,17 @@ TSV, Unicode UTF-8 で出力します．前述のとおり，和文誌の日本�
 名寄せに失敗した場合は，その原因を標準エラー出力に出力した上で，元データの著者リストをそのまま出力します．ただし区切り文字は "＠" から "；" に変更します．
 
 投稿論文管理システムから取得できるデータは，基本的に vol, no, pp の情報で照合できるため，これらの情報がない場合は名寄せしません．
+
+名寄せの結果は最後の項目に出力されます．以下に出力例を示します．
+
+    COMPLETED: paper_id，著者リストともに照合できたもの
+    DIFF_NUM_SUBMIT: submissions の著者数と，metadata の著者数が異なるもの
+      e.g., DIFF_NUM_SUBMIT：【meta_author1＠meta_author2＠meta_author3】：【submit_author1＠submit_author2＠submit_author3＠submit_author4】：【submit_author1＠affiliation1；submit_author2（membernum2）＠affiliation2；submit_author3（membernum3）＠affiliation3；submit_author4（membernum4）＠affiliation4】
+    DIFF_OTHER_SUBMIT: submissions の著者順，著者名の漢字などが metadata のものと異なるもの
+      e.g., DIFF_OTHER_SUBMIT：【meta_author1＠meta_author2＠meta_author3】：【submit_author1＠submit_author2＠submit_author3】：【submit_author1＠affiliation1；submit_author2（membernum2）＠affiliation2；submit_author3（membernum3）＠affiliation3】
+    DIFF_NUM_META_JA_EN: 'ja' metadata と 'en' metadata の著者数が異なるもの
+      e.g., DIFF_NUM_META_JA_EN：【ja_meta_author1＠ja_meta_author2＠ja_meta_author3】：【en_meta_author1＠en_meta_author2＠en_meta_author3】：【】
+    NO_MATCH: submissions のデータがないもの（古い文献）
 
 ### 論文誌検索システムでの論文のダウンロード回数集計スクリプトの利用手順
 

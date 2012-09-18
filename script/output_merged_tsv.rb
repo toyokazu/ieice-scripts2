@@ -124,6 +124,10 @@ def authorname(submission, target = $target)
   end
 end
 
+def submit_authors(submissions, target = $target)
+  submissions.map {|s| authorname(s, target)}
+end
+
 def orgname(submission, target = $target)
   orgname = nil
   case target
@@ -140,12 +144,70 @@ def membernum(submission)
   (membernum.nil? || membernum.empty?) ? "" : "（#{membernum}）"
 end
 
-def output_paper(file, paper, author)
-  file.puts "#{paper[0..14].join("\t")}\t#{author}\t#{paper[16..28].join("\t")}"
+# == authors_with_affiliations
+# add "（member_number）＠affiliation" which are extracted from submissions to the authors
+# authors: author data extracted from the paper search system data (metadata)
+# submissions: paper submission system data (submit)
+# target: 'ja'/'en'
+def authors_with_affiliations(authors, submissions, target = $target)
+  authors_with_affiliations = []
+  authors.each_with_index do |author, i|
+    s = submissions[i]
+    # DIFF_NUM_META_JA_EN
+    if s.nil?
+      return authors_with_affiliations
+    end
+    authors_with_affiliations << "#{author}#{membernum(s)}#{orgname(s, target)}"
+  end
+  authors_with_affiliations
+end
+
+# == comment
+# generate comment for helping error correction
+# authors1: metadata_authors or ja metadata_authors
+# authors2: submit_authors or en metadata_authors
+def comment(error_msg, authors1, authors2, submissions, target = $target)
+  "#{error_msg}：【#{authors1.join("＠")}】：【#{authors2.join("＠")}】：【#{authors_with_affiliations(authors2, submissions, target).join("；")}】"
+end
+
+def output_paper(file, paper, author, comment = "COMPLETED")
+  file.puts "#{paper[0..14].join("\t")}\t#{author}\t#{paper[16..28].join("\t")}\t#{comment}"
 end
 
 $papers = $db.execute("select paper_id from #{$submissions} where paper_id != 'NO_PAGES' and paper_id != 'NO_VOLUME' group by paper_id order by paper_id asc;")
 $papers = $papers.map {|p| p[0]}
+
+# == ERROR MESSAGES
+# The output tsv file includes comment for each line. The comment includes the following messages.
+#
+# COMPLETED: the paper_id and the authors are matched between the paper submission system data
+# (submit) and paper search system data (metadata).
+#
+# DIFF_NUM_SUBMIT: the number of authors in 'submit' is different from 'metadata'.
+# the differences are shown in succesion.
+#
+# e.g., DIFF_NUM_SUBMIT：【meta_author1＠meta_author2＠meta_author3】：【submit_author1＠submit_author2＠submit_author3＠submit_author4】：【submit_author1＠affiliation1；submit_author2（membernum2）＠affiliation2；submit_author3（membernum3）＠affiliation3；submit_author4（membernum4）＠affiliation4】
+#
+# If you want to adapt this collation as production data, you must replace submit_authorX to
+# meta_authorX. In case of reorder, you must carefully replace them (in this example, you must
+# remove submit_author4).
+#
+# DIFF_OTHER_SUBMIT: the order of the authors or the characters of author names in 'submit' are different
+# from 'metadata'.
+#
+# e.g., DIFF_OTHER_SUBMIT：【meta_author1＠meta_author2＠meta_author3】：【submit_author1＠submit_author2＠submit_author3】：【submit_author1＠affiliation1；submit_author2（membernum2）＠affiliation2；submit_author3（membernum3）＠affiliation3】
+#
+# If you want to adapt this collation as production data, you must replace submit_authorX to
+# meta_authorX. In case of reorder, you must carefully replace them.
+#
+# DIFF_NUM_META_JA_EN: the number of authors in 'ja' 'metadata' is different from 'en' 'metadata'.
+#
+# e.g., DIFF_NUM_META_JA_EN：【ja_meta_author1＠ja_meta_author2＠ja_meta_author3】：【en_meta_author1＠en_meta_author2＠en_meta_author3】：【en_meta_author1＠affiliation1；en_meta_author2（membernum2）＠affiliation2；en_meta_author3（membernum3）＠affiliation3】
+#
+# NO_MATCH: no 'submit' data is found.
+#
+# if there are papers found in 'submit' but not in 'metadata', they are printed to stderr
+# as "#{paper_id} is not found in #{metadata}".
 
 $papers.each do |paper_id|
   paper = $db.execute("select * from #{$metadata} where id = ?;", paper_id).first
@@ -154,6 +216,7 @@ $papers.each do |paper_id|
   if $target == 'ja'
     en_ja_paper = $db.execute("select * from #{$en_ja_metadata} where id = ?;", paper_id).first
   end
+  # 
   if paper.nil? || paper.empty?
     $stderr.puts "#{paper_id} is not found in #{$metadata}"
     next
@@ -167,65 +230,52 @@ $papers.each do |paper_id|
   end
   # submissions author list
   # s[13]: author (name_j)
-  submit_authors = submissions.map {|s| authorname(s)}
+  submit_authors = submit_authors(submissions)
   # compare author list
   if authors.size != submit_authors.size
     $stderr.puts "the number of author list does not match @#{paper_id}"
     $stderr.puts "metadata: #{authors.join("＠")}"
     $stderr.puts "submit  : #{submit_authors.join("＠")}"
-    output_paper($output_file, paper, authors(paper).join("；"))
+    output_paper($output_file, paper, authors(paper).join("；"), comment("DIFF_NUM_SUBMIT", authors, submit_authors, submissions))
     if $target == 'ja' && !en_ja_paper.nil?
-      output_paper($en_ja_output_file, en_ja_paper, authors(en_ja_paper).join("；"))
+      output_paper($en_ja_output_file, en_ja_paper, authors(en_ja_paper).join("；"), comment("DIFF_NUM_SUBMIT", authors(en_ja_paper), submit_authors(submissions, 'en'), submissions, 'en'))
     end
     next
-  elsif authors.join("＠") != submit_authors.join("＠")
+  elsif authors.join("＠").gsub(/\s/, "") != submit_authors.join("＠").gsub(/\s/, "") # ignore spaces to reduce exceptions
     $stderr.puts "author list does not match @#{paper_id}"
     $stderr.puts "metadata: #{authors.join("＠")}"
     $stderr.puts "submit  : #{submit_authors.join("＠")}"
-    output_paper($output_file, paper, authors(paper).join("；"))
+    output_paper($output_file, paper, authors(paper).join("；"), comment("DIFF_OTHER_SUBMIT", authors, submit_authors, submissions))
     if $target == 'ja' && !en_ja_paper.nil?
-      output_paper($en_ja_output_file, en_ja_paper, authors(en_ja_paper).join("；"))
+      output_paper($en_ja_output_file, en_ja_paper, authors(en_ja_paper).join("；"), comment("DIFF_OTHER_SUBMIT", authors(en_ja_paper), submit_authors(submissions, 'en'), submissions, 'en'))
     end
     next
   end
-  # add "（member_number）＠affiliation"
-  authors_with_affiliations = []
-  authors.each_with_index do |author, i|
-    s = submissions[i]
-    authors_with_affiliations << "#{author}#{membernum(s)}#{orgname(s)}"
-  end
-  output_paper($output_file, paper, authors_with_affiliations.join("；"))
+  output_paper($output_file, paper, authors_with_affiliations(authors, submissions).join("；"))
 
   if $target == 'ja' && !en_ja_paper.nil?
     if en_ja_authors.size != authors.size
       $stderr.puts "the number of ja/en author list does not match @#{paper_id}"
       $stderr.puts "ja metadata: #{authors.join("＠")}"
       $stderr.puts "en metadata: #{en_ja_authors.join("＠")}"
-      output_paper($en_ja_output_file, en_ja_paper, authors(en_ja_paper).join("；"))
+      output_paper($en_ja_output_file, en_ja_paper, authors(en_ja_paper).join("；"), comment("DIFF_NUM_META_JA_EN", authors, en_ja_authors, submissions, 'en'))
       next
     end
-    en_ja_authors_with_affiliations = []
-    en_ja_authors.each_with_index do |author, i|
-      s = submissions[i]
-      # debug
-      $stderr.puts "author = #{author}, i = #{i}, en_ja_paper = #{en_ja_paper}" if s.nil?
-      en_ja_authors_with_affiliations << "#{author}#{membernum(s)}#{orgname(s, 'en')}"
-    end
-    output_paper($en_ja_output_file, en_ja_paper, en_ja_authors_with_affiliations.join("；"))
+    output_paper($en_ja_output_file, en_ja_paper, authors_with_affiliations(en_ja_authors, submissions, 'en').join("；"))
   end
 end
 
 $rest_papers = $db.execute("select * from #{$metadata} where id not in (select paper_id from #{$submissions} where paper_id != 'NO_PAGES' and paper_id != 'NO_VOLUME' group by paper_id order by paper_id asc) order by id;")
 # output the rest of papers exactly as it was
 $rest_papers.each do |paper|
-  output_paper($output_file, paper, authors(paper).join("；"))
+  output_paper($output_file, paper, authors(paper).join("；"), "NO_MATCH")
 end
 $output_file.close
 
 if $target == 'ja'
   $en_ja_rest_papers = $db.execute("select * from #{$en_ja_metadata} where id not in (select paper_id from #{$submissions} where paper_id != 'NO_PAGES' and paper_id != 'NO_VOLUME' group by paper_id order by paper_id asc) order by id;")
   $en_ja_rest_papers.each do |en_ja_paper|
-    output_paper($en_ja_output_file, en_ja_paper, authors(en_ja_paper).join("；"))
+    output_paper($en_ja_output_file, en_ja_paper, authors(en_ja_paper).join("；"), "NO_MATCH")
   end
   $en_ja_output_file.close
 end
