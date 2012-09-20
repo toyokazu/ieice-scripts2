@@ -17,5 +17,6 @@ $sh = Shell.new
 $sh.transact do
   cd("#{ROOT_PATH}/files")
   system("sqlite3 #{$config["log_db"]} < #{ROOT_PATH}/script/createtable_logs.sql")
-  system("sqlite3 #{$config["log_db"]} < #{ROOT_PATH}/script/import_and_convert_logs.sql")
+  system("#{ROOT_PATH}/script/import_and_convert_logs.rb | sqlite3 #{$config["log_db"]}")
+  #system("sqlite3 #{$config["log_db"]} < #{ROOT_PATH}/script/import_and_convert_logs.sql")
 end

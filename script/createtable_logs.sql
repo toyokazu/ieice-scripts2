@@ -4,7 +4,7 @@ create table access_logs (
   /* 0: 項番  id  int8 */
   id integer,
   /* 1: 閲覧日時  log_date  varchar 10  yyyymmdd hhmmss */
-  log_date varchar(10),
+  log_date datetime,
   /* 2: ログインユーザ  user_id varchar 100 "環境変数　REMOTE_USER ID or メールアドレス" */
   user_id varchar(100),
   /* 3: 会員ソサイエティ  society varchar 5 */
