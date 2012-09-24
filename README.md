@@ -264,7 +264,9 @@ TSV, Unicode UTF-8 で出力します．前述のとおり，和文誌の日本�
       e.g., DIFF_NUM_META_JA_EN：【ja_meta_author1＠ja_meta_author2＠ja_meta_author3】：【en_meta_author1＠en_meta_author2＠en_meta_author3】：【】
     NO_MATCH: submissions のデータがないもの（古い文献）
 
-### 論文誌検索システムでの論文のダウンロード回数集計スクリプトの利用手順
+### 論文誌検索システムでの論文のダウンロード回数集計スクリプト (1) の利用手順
+
+DB上でインタラクティブにデータを分析する場合の方法です．件数が多くなるとインポートに非常に時間がかかるので，比較的少ない件数（1ヶ月分程度）のデータを分析する場合に利用してください．以下のコマンドで SQLite3 にログファイルをインポートします．
 
     % ./script/import_logs.rb 2> logs/log_import_log.txt
     % ./script/count_logs.rb 2> logs/log_count_log.txt
@@ -276,6 +278,61 @@ TSV, Unicode UTF-8 で出力します．前述のとおり，和文誌の日本�
     % ./script/clear_logs.rb
 
 で削除を行います．
+
+
+### 論文誌検索システムでの論文のダウンロード回数集計スクリプト (2) の利用手順
+
+TSV ファイルのまま入力ファイルを分析し，結果を CSV 形式で出力します．
+入力ファイルは設定ファイル count_log_files.yml で指定します．
+
+    % cp ./config/count_log_files.yml.sample ./config/count_log_files.yml
+    % vi ./config/count_log_files.yml
+    log_files: search_logs/search_log_*.bak
+    output: downloads_count.txt
+
+log_files で入力となるログファイル群を指定し，output で出力ファイル名を指定します．入力ファイルの指定にはワイルドカードなど，Ruby の Dir クラスで利用可能なパターン指定が利用できます．
+
+class Dir
+http://doc.ruby-lang.org/ja/1.9.3/class/Dir.html
+
+
+入力ファイルを指定した上で，まず，以下のコマンドにより入力ファイルの文字コードを変換します．
+
+    % ./script/preproc_logs.rb
+
+次に，以下のコマンドで UTF-8 形式のファイルの論文参照回数をカウントし，出力ファイルに出力します．処理中のファイル名がエラー出力に提示されるので，どこまで処理されたか確認できます．
+
+    % ./script/count_log_files.rb
+
+なお，途中で停止した場合，処理完了したファイルまでのカウント結果を出力ファイルに出力します．処理開始時に出力ファイルが存在する場合は，その結果を反映した上で，続きをカウントします．そのため，処理中断時に残ったファイルがわかっていれば，続きから処理することができます．なお，現在の実装では，Bot と思われるクライアントからのアクセスは無視しています．
+
+#### 入力フォーマット（タブ区切り）
+
+    # 0: 項番  id  int8    
+    # 1: 閲覧日時  log_date  varchar 10  yyyymmdd hhmmss
+    # 2: ログインユーザ  user_id varchar 100 "環境変数　REMOTE_USER ID or メールアドレス"
+    # 3: 会員ソサイエティ  society varchar 5 
+    # 4: 閲覧ファイル名  f_name  varchar 100 
+    # 5: 分冊  category  varchar 100 
+    # 6: 大分類  type  varchar 100 
+    # 7: リモートホストアドレス  remote_addr varchar 200 環境変数　REMOTE_ADDR
+    # 8: リモートホスト名  remote_host varchar 200 環境変数　REMOTE_HOST
+    # 9:  ユーザエージェント  user_agent  varchar 100 環境変数　HTTP_USER_AGENT
+    # 10:  リクエストURI uri varchar 500 
+    # 11:  ブラウザ  browser varchar 50  
+    # 12:  クライアントOS  os  varchar 500 
+    # 13:  閲覧状態  err int   "ファイル閲覧時：1 ログイン成功時：2"
+    # 14:  ホスト名  host  varchar 200 ホスト名
+    # 15:  アクセス種別  access  varchar 1 "・通常ユーザ認証時 ： 0 ・サイトライセンス認証時 ： 1 ・サイトライセンス認証時＋ユーザ認証 ： 2"
+    # 16:  あらまし（Summary)閲覧  summary_view  varchar 1 あらまし閲覧時　：　1
+    # 17:  archive閲覧フラグ table_of_contents_view  varchar 1 archive閲覧時：1
+    # 18:  最新号閲覧フラグ  index_view  varchar 1 最新号閲覧時：1
+    # 19:  環境変数：X-Forwarded-For x_forwarded_for varchar 200 環境変数：X-Forwarded-For
+
+#### 出力フォーマット (カンマ区切り)
+
+    論文ファイル, 参照回数
+    j80-b_1_1.pdf, 1351
 
 ## License (MIT License)
 Copyright (C) 2012 by Toyokazu Akiyama.

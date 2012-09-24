@@ -1,0 +1,4 @@
+#log_files: search_logs/search_log_201207.bak
+#log_files: search_logs/search_log_20120[67].bak
+log_files: search_logs/search_log_*.bak
+output: downloads_count.txt
