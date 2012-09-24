@@ -194,18 +194,24 @@ class AccessLogParser < DataParser
   # 57165 1369272 16096563
   # % grep 'Yeti/' files/search_logs/search_log_201207.bak-utf8 | wc
   # 51714 1095863 12436754
+  # % grep bot-Mobile search_logs/search_log_201207.bak-utf8 | wc
+  # 21443  543728 7547284
   # % grep 'Bot/' files/search_logs/search_log_201207.bak-utf8 | wc
   # 21886  495656 6201784
   # % grep 'Spider' files/search_logs/search_log_201207.bak-utf8 | wc
   # 4462   98209 1417390
   # % grep 'Slurp/' files/search_logs/search_log_201207.bak-utf8 | wc
   # 12     292    3706
+  #
+  # abuse?
+  # % grep e92-b_9_2773.pdf files/search_logs/search_log_201104.bak-utf8 | grep 202.115.65.119 | wc
+  # 10277  308308 3174459
   def is_bot?
     if @record.user_agent =~ /bot\// || @record.user_agent =~ /spider/ ||
       @record.user_agent =~ /robot/ || @record.user_agent =~ /Crawler/ ||
       @record.user_agent =~ /crawler/ || @record.user_agent =~ /Yeti\// ||
-      @record.user_agent =~ /Bot\// || @record.user_agent =~ /Spider/ ||
-      @record.user_agent =~ /Slurp\//
+      @record.user_agent =~ /bot-Mobile/ || @record.user_agent =~ /Bot\// ||
+      @record.user_agent =~ /Spider/ || @record.user_agent =~ /Slurp\//
       return true
     end
     false
