@@ -22,6 +22,10 @@ http://www.cygwin.com/
 6. "Choose A Download Site" では，国内のサイトを適当に選択してください (例: http://ftp.jaist.ac.jp)．
 7. "Select Packages" では，必要なパッケージを指定します．RVM では，git, curl 等のコマンドラインツールを利用するので，以下の項目が有効になっているか（Skip ではなくバージョン番号が左端に表示されているか）確認してください．
 
+* Databases
+    * libsqlite3-devel
+    * libsqlite3_0
+    * sqlite3
 * Devel
     * gcc
     * gcc-core
@@ -72,7 +76,9 @@ http://www.cygwin.com/
     $ rvm install 1.9.3
     $ rvm use 1.9.3
 
-これで ruby のインストールは完了です．
+これで ruby のインストールは完了です．あと，sqlite3 という Ruby のパッケージを利用しますので，それもインストールします．
+
+    $ gem install sqlite3
 
 ### Linux (debian squeeze) での RVM のセットアップ
 
@@ -94,7 +100,9 @@ RVM が依存するパッケージをインストールします．
     $ rvm install 1.9.3
     $ rvm use 1.9.3
 
-これで ruby のインストールは完了です．
+これで ruby のインストールは完了です．あと，sqlite3 という Ruby のパッケージを利用しますので，それもインストールします．
+
+    $ gem install sqlite3
 
 ### ieice-scripts2 のダウンロード
 
