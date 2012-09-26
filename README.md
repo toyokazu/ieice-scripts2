@@ -30,13 +30,18 @@ http://www.cygwin.com/
     * libtool
     * make
     * readline
+* Editor
+    * vim
+    * vim-common
 * Libs
     * zlib
     * zlib-devel
 * Net
+    * ca-certificates
+    * curl
+    * libcurl-devel
     * openssl
     * openssh
-    * curl
 * Utils
     * patch
 
