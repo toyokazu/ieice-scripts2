@@ -34,7 +34,7 @@ http://www.cygwin.com/
     * libtool
     * make
     * readline
-* Editor
+* Editors
     * vim
     * vim-common
 * Libs
@@ -124,18 +124,17 @@ RVM が依存するパッケージをインストールします．
     % cp ./config/tsv_files.yml.sample ./config/tsv_files.yml
     % cp ./config/database.yml.sample ./config/database.yml
     % vi ./config/tsv_files.yml
-    tsv_submissions:
-      - output_a_j-utf8.txt
-      - output_b_j-utf8.txt
-      - output_c_j-utf8.txt
-      - output_d_j-utf8.txt
-      - output_a_e-utf8.txt
-      - output_b_e-utf8.txt
-      - output_c_e-utf8.txt
-      - output_d_e-utf8.txt
-    ja_tsv_output: final_ja.txt
-    en_ja_tsv_output: final_en_ja.txt
-    en_tsv_output: final_en.txt
+    tsv_submissions: ["wabun-a",
+      "wabun-b",
+      "wabun-c",
+      "wabun-d",
+      "trans-a",
+      "trans-b",
+      "trans-c",
+      "trans-d"]
+    tsv_tran_ja: "tran_ja"
+    tsv_tran_en_ja: "tran_en_ja"
+    tsv_tran_en: "tran_en"
     
     % vi ./config/database.yml
     database: papers.sqlite3
@@ -147,15 +146,13 @@ RVM が依存するパッケージをインストールします．
 
 設定ファイルには入力ファイル，出力ファイルのファイル名を指定します．入力ファイルは論文誌ごとに1つずつあると想定しています．また出力ファイルは，和文誌の日本語データ（final_ja.txt），和文誌の英語データ（final_en_ja.txt），英文誌の英語データ（final_en.txt）を出力することを想定しています．
 
-入力ファイル，出力ファイルは files ディレクトリ以下で読み出し，書き込みされるため，ディレクトリを作成し，ここにファイルをコピーしてください．なお，ExcelファイルからTSVを作成した場合，文字コードがShiftJISになっています．その場合，例えば，以下の nkf.rb コマンドで ShiftJIS から Unicode UTF-8 に変換しておきます．
+入力ファイル，出力ファイルは files ディレクトリ以下で読み出し，書き込みされるため，ディレクトリを作成し，ここにファイルをコピーしてください．なお，ExcelファイルからTSVを作成した場合，文字コードがShiftJISになっています．その場合，例えば，以下の nkf.rb コマンドで ShiftJIS から Unicode UTF-8 に変換しておく必要があります．
 
     % ./script/nkf.rb -Sw files/output_a_j.txt > files/output_a_j-utf8.txt
 
-output_a-d_e|j.txt という名称のファイルを一気に nkf で変換したい場合は，以下のコマンドを利用します．
+この変換処理は preproc.rb の処理に含まれています．preproc.rb は import_databases.rb または import_databases.sh から呼び出されます．
 
-    % ./script/preproc.rb
-
-変換する対象ファイル名については，config/preproc.yml に指定します．config/preproc.yml.sample をコピーして利用してください．
+変換する対象ファイル名 (wabun-X_YYYYMMDD.txt, trans-X_YYYYMMDD.txt) については，config/preproc.yml に指定します．config/preproc.yml.sample をコピーして利用してください．postfix (YYYYMMDD) についてはコマンド実行時に自動的に実行日時の値（例: 20121214) が付与されます．明示的に postfix を指定したい場合は，コマンドの後ろに YYYYMMDD を指定してください．
 
 準備ができたら，以下のようにコマンドを実行します．
 
@@ -163,7 +160,18 @@ output_a-d_e|j.txt という名称のファイルを一気に nkf で変換し�
     % ./script/output_merged_tsv.rb ja 2> logs/ja_logs.txt
     % ./script/output_merged_tsv.rb en 2> logs/en_logs.txt
 
-以上で，files ディレクトリ以下に final_xxx.txt が出力されます．
+明示的に処理したいファイルの日付 (postfix) を指定したい場合は，下記のように実行します．
+
+    % ./script/import_databases.rb 20121214 2> logs/import_logs.txt
+    % ./script/output_merged_tsv.rb ja 20121214 2> logs/ja_logs.txt
+    % ./script/output_merged_tsv.rb en 20121214 2> logs/en_logs.txt
+
+Windows の場合，import_databases.rb の代わりに import_databases.sh を利用してください．
+
+    % ./script/import_databases.sh 2> logs/import_logs.txt
+    % ./script/import_databases.sh 20121214 2> logs/import_logs.txt
+
+以上で，files ディレクトリ以下に所属情報をマージした出力データ (tran_ja_YYYYMMDD.txt, tran_en_ja_YYYYMMDD.txt, tran_en_YYYYMMDD.txt) が出力されます．入力ファイル名，出力ファイル名は同様に config/preproc.yml に指定できます．ファイル名の
 
 ログファイルをWindowsで読みやすくするためには ShiftJIS への変換が必要です．
 
@@ -173,11 +181,15 @@ output_a-d_e|j.txt という名称のファイルを一気に nkf で変換し�
 
     % ./script/clear_databases.rb
 
-で削除を行います．
+で削除を行います．Windows の場合は
 
-### generate_paper_id.rb
+    % ./script/clear_databases.sh
 
-投稿論文管理システムからの入力ファイル (TSV, UTF-8) を読み込み，volume1 の項目から paper_id を生成して付与します．import_databases.rb から呼び出されます．
+を利用してください．
+
+### preproc.rb
+
+投稿論文管理システムからの入力ファイル (TSV, ShiftJIS, Excel から生成) の文字コードを変換し (ShiftJIS -> UTF8)，volume1 の項目から paper_id を生成して付与します．import_databases.rb から呼び出されます．
 
 ### import_databases.rb
 
@@ -188,12 +200,16 @@ output_a-d_e|j.txt という名称のファイルを一気に nkf で変換し�
 * 論文誌検索システムのデータ (metadata) を SQLite3 にインポート
 * データベースのインデックス生成
 
-内部で，generate_paper_id.rb, createtable_xxx.sql, import_and_convert_xxx.sql を呼び出しています．
+内部で，generate_paper_id.rb, createtable_xxx.sql, import_and_convert_xxx.rb を呼び出しています．Windows の場合は Cygwin で Ruby の Shell が想定どおりに動作しないので，import_databases.sh を利用してください．
+
+### import_and_convert_xxx.rb
+
+tsv_files.yml に指定されたファイル名のデータをSQLite3にインポートするためのSQL文を生成します．
 
 ### output_merged_tsv.rb
 
-* import_databases.rb で生成したDBから，著者名リストに所属をマージしたTSVを出力する
-* オプションに ja または en を指定することで，和文論文誌，英文論文誌それぞれのデータを出力する．なお，和文論文誌データ処理時には，和文論文誌の英文データについても同時に出力する．
+* import_databases.rb で生成したDBから，著者名リストに所属をマージしたTSVを出力します．
+* オプションに ja または en を指定することで，和文論文誌，英文論文誌それぞれのデータを出力します．なお，和文論文誌データ処理時には，和文論文誌の英文データについても同時に出力します．
 
 ### 入出力フォーマット
 

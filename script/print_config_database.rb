@@ -12,12 +12,4 @@ if !File.exists?(config_path)
 end
 
 $config = YAML.load_file(config_path)
-
-$sh = Shell.new
-$sh.transact do
-  cd("#{ROOT_PATH}/files")
-  system("rm *-utf8.txt")
-  system("rm *-utf8-with_header.txt")
-  system("rm *-with_paper_id.txt")
-  system("rm #{$config["paper_db"]}")
-end
+print $config[ARGV[0]]

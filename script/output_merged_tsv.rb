@@ -21,7 +21,10 @@ $tsv_config = YAML.load_file(tsv_config_path)
 $db_config = YAML.load_file(db_config_path)
 
 def error_and_exit
-  $stderr.puts "usage: output_merged_tsv.rb ja|en"
+  $stderr.puts "usage: output_merged_tsv.rb ja|en [YYYYMMDD]"
+  $stderr.puts "arguments:"
+  $stderr.puts "    must: ja|en"
+  $stderr.puts "    optional: YYYYMMDD"
   exit 1
 end
 
@@ -31,20 +34,25 @@ end
 
 $target = ARGV[0]
 
+# generate input/output file name postfix
+$date = ARGV[1] || Time.now.strftime("%Y%m%d")
+
+# initialize language dependent parameters
 case $target
 when 'ja'
   $submissions = "ja_paper_submissions"
   $metadata = "ja_paper_metadata"
   $en_ja_metadata = "en_ja_paper_metadata"
-  $output_file = open("#{ROOT_PATH}/files/#{$tsv_config["ja_tsv_output"]}", "w")
-  $en_ja_output_file = open("#{ROOT_PATH}/files/#{$tsv_config["en_ja_tsv_output"]}", "w")
+  $output_file = open("#{ROOT_PATH}/files/#{$tsv_config["tsv_tran_ja"]}_#{$date}.txt", "w")
+  $en_ja_output_file = open("#{ROOT_PATH}/files/#{$tsv_config["tsv_tran_en_ja"]}_#{$date}.txt", "w")
 when 'en'
   $submissions = "en_paper_submissions"
   $metadata = "en_paper_metadata"
-  $output_file = open("#{ROOT_PATH}/files/#{$tsv_config["en_tsv_output"]}", "w")
+  $output_file = open("#{ROOT_PATH}/files/#{$tsv_config["tsv_tran_en"]}_#{$date}.txt", "w")
 else
   error_and_exit
 end
+
 
 $db = SQLite3::Database.new("#{ROOT_PATH}/files/#{$db_config["paper_db"]}")
 

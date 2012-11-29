@@ -16,9 +16,12 @@ $config = YAML.load_file(config_path)
 $sh = Shell.new
 $sh.transact do
   cd("#{ROOT_PATH}/files")
-  system("#{ROOT_PATH}/script/generate_paper_id.rb")
+  system("#{ROOT_PATH}/script/preproc.rb #{ARGV[0]}")
+  #system("#{ROOT_PATH}/script/generate_paper_id.rb")
   system("sqlite3 #{$config["paper_db"]} < #{ROOT_PATH}/script/createtable_paper_submissions.sql")
-  system("sqlite3 #{$config["paper_db"]} < #{ROOT_PATH}/script/import_and_convert_paper_submissions.sql")
+  system("#{ROOT_PATH}/script/import_and_convert_paper_submissions.rb #{ARGV[0]} | sqlite3 #{$config["paper_db"]}")
+  #system("sqlite3 #{$config["paper_db"]} < #{ROOT_PATH}/script/import_and_convert_paper_submissions.sql")
   system("sqlite3 #{$config["paper_db"]} < #{ROOT_PATH}/script/createtable_paper_metadata.sql")
-  system("sqlite3 #{$config["paper_db"]} < #{ROOT_PATH}/script/import_and_convert_paper_metadata.sql")
+  system("#{ROOT_PATH}/script/import_and_convert_paper_metadata.rb #{ARGV[0]} | sqlite3 #{$config["paper_db"]}")
+  #system("sqlite3 #{$config["paper_db"]} < #{ROOT_PATH}/script/import_and_convert_paper_metadata.sql")
 end

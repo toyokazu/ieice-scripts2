@@ -265,7 +265,7 @@ end
 def save_hash(paper_hash, config)
   open("#{ROOT_PATH}/files/#{config["output"]}", "w") do |file|
     paper_hash.sort {|a,b| b[1] <=> a[1]}.each do |k, v|
-      file.puts "#{k}, #{v}"
+      file.puts "#{k},#{v}"
     end
   end
 end
