@@ -28,17 +28,21 @@ $prefix = "#{ROOT_PATH}/files"
 # generate input/output file name postfix
 $date = ARGV[0] || Time.now.strftime("%Y%m%d")
 
-$tsv_trans_ja = "#{$prefix}/input_#{config["tsv_tran_ja"]}_#{$date}.txt"
-$tsv_trans_en_ja = "#{$prefix}/input_#{config["tsv_tran_en_ja"]}_#{$date}.txt"
-$tsv_trans_en = "#{$prefix}/input_#{config["tsv_tran_en"]}_#{$date}.txt"
+$tsv_tran_ja = "#{$prefix}/input_#{config["tsv_tran_ja"]}_#{$date}.txt"
+$tsv_tran_en_ja = "#{$prefix}/input_#{config["tsv_tran_en_ja"]}_#{$date}.txt"
+$tsv_tran_en = "#{$prefix}/input_#{config["tsv_tran_en"]}_#{$date}.txt"
 
-print <<SQL
-/* TSV ファイルのインポート */
+print <<SQL1
+/* TSVファイルのインポート */
 .separator \"\\t\"
-.import #{$tsv_trans_ja} ja_paper_metadata
-.import #{$tsv_trans_en_ja} en_ja_paper_metadata
-.import #{$tsv_trans_en} en_paper_metadata
+SQL1
+print <<SQL2
+.import #{$tsv_tran_ja} ja_paper_metadata
+.import #{$tsv_tran_en_ja} en_ja_paper_metadata
+.import #{$tsv_tran_en} en_paper_metadata
+SQL2
+print <<SQL3
 create index ja_paper_metadata_index on ja_paper_metadata ( id );
 create index en_ja_paper_metadata_index on en_ja_paper_metadata ( id );
 create index en_paper_metadata_index on en_paper_metadata ( id );
-SQL
+SQL3
