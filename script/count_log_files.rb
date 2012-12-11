@@ -4,7 +4,7 @@ require 'yaml'
 require 'tempfile'
 
 ROOT_PATH = File.expand_path('../../',  __FILE__)
-config_path = ARGV[0] || "#{ROOT_PATH}/config/count_log_files.yml"
+config_path = "#{ROOT_PATH}/config/count_log_files.yml"
 
 if !File.exists?(config_path)
   puts "can not find configuration file: #{config_path}"
@@ -23,14 +23,6 @@ config = YAML.load_file(config_path)
 # search_logs/search_log_*.bak: the file name pattern of the paper search system access log (tsv)
 # downloads_count.txt: output file name (tsv)
 
-class ArrayHash < Hash
-  def []=(key, value)
-    if self[key].class != Array
-      super(key, [])
-    end
-    self[key] << value
-  end
-end
 
 class DataParser
   class Record
@@ -158,16 +150,23 @@ class AccessLogParser < DataParser
     end
   end
 
-  attr_reader :records, :paper_hash, :login_hash
+  attr_reader :records, :paper_hash, :remote_addr_hash, :login_hash
   def initialize(filename)
     @target_file = filename
     # for debug
     $stderr.puts "start processing #{filename}"
 
+    # extract month
+    @target_file =~ /search_log_(\d{6}).bak-utf8/
+    @month = $1
+
     # public attributes
     @records = []
-    @paper_hash = ArrayHash.new
-    @login_hash = ArrayHash.new
+    @paper_hash = {}
+    @remote_addr_hash = {}
+    @num_bots = 0
+    @num_others = 0
+    @login_hash = {}
 
     # private attributes
     # used for parsing multiple lines
@@ -233,60 +232,245 @@ class AccessLogParser < DataParser
       when "type"
         #@paper_hash[@record.paper_id] = @record
         #if @record.paper_id !~ /\.pdf$/ || @record.paper_id =~ /\_000\.pdf$/ || @record.err != "1" || @record.summary_view == "1"
-        if is_bot? || @record.paper_id !~ /\.pdf$/ || @record.paper_id =~ /\_000\.pdf$/ || @record.err != "1" || @record.summary_view == "1"
+        if is_bot?
+          @num_bots += 1
+          next
+        elsif @record.paper_id !~ /\.pdf$/ || @record.paper_id =~ /\_000\.pdf$/ || @record.err != "1" || @record.summary_view == "1"
+          @num_others += 1
           next
         end
-        @paper_hash[@record.paper_id] = @record.log_date
+        calc_stat(@record.paper_id, @record.remote_addr)
       when "login"
         #@login_hash[@record.user_id] = @record
         #@login_hash[@record.user_id] = @record.log_date
       end
     end
   end
+
+  def calc_stat(paper_id, remote_addr)
+    # count paper access
+    if @paper_hash[paper_id].nil?
+      @paper_hash[paper_id] = {"paper" => 1, "remote_addr" => {}}
+    else
+      @paper_hash[paper_id]["paper"] += 1
+    end
+
+    # count remote_addr
+    if @remote_addr_hash[remote_addr].nil?
+      @remote_addr_hash[remote_addr] = {"paper" => {}, "remote_addr" => 1}
+    else
+      @remote_addr_hash[remote_addr]["remote_addr"] += 1
+    end
+
+    # count remote_addr per paper
+    if @paper_hash[paper_id]["remote_addr"][remote_addr].nil?
+      @paper_hash[paper_id]["remote_addr"][remote_addr] = 1
+    else
+      @paper_hash[paper_id]["remote_addr"][remote_addr] += 1
+    end
+
+    # count paper per remote_addr
+    if @remote_addr_hash[remote_addr]["paper"][paper_id].nil?
+      @remote_addr_hash[remote_addr]["paper"][paper_id] = 1
+    else
+      @remote_addr_hash[remote_addr]["paper"][paper_id] += 1
+    end
+  end
+
+  def month_stat
+    # extract month stat
+    paper_hash = {}
+    remote_addr_hash = {}
+    
+    # calc paper count
+    # -> these codes must be fixed (not finished yet)
+    # -> paper_hash, remote_addr_hash should be replaced as a stats hash to save memory and strage space
+    @paper_hash.each do |paper_id, entry|
+      if paper_hash[paper_id].nil?
+        paper_hash[paper_id] = {"paper" => entry["paper"],
+                                "remote_addr_uniq" => entry["remote_addr"].keys.size,
+                                "remote_addr" => entry["remote_addr"].values.inject(0) {|sum, i| sum + i}}
+      else
+        paper_hash[paper_id]["paper"] += entry["paper"]
+        paper_hash[paper_id]["remote_addr_uniq"] += entry["remote_addr"].keys.size
+        paper_hash[paper_id]["remote_addr"] += entry["remote_addr"].values.inject(0) {|sum, i| sum + i}
+      end
+    end
+
+    @remote_addr_hash.each do |remote_addr, entry|
+      if remote_addr_hash[remote_addr].nil?
+        remote_addr_hash[remote_addr] = {"remote_addr" => entry["remote_addr"],
+                                         "paper_uniq" => entry["paper"].keys.size,
+                                         "paper" => entry["paper"].values.inject(0) {|sum, i| sum + i}}
+      else
+        remote_addr_hash[remote_addr]["remote_addr"] += entry["remote_addr"]
+        remote_addr_hash[remote_addr]["paper_uniq"] += entry["paper"].keys.size
+        remote_addr_hash[remote_addr]["paper"] += entry["paper"].values.inject(0) {|sum, i| sum + i}
+      end
+    end
+
+    # calc avg_paper, var_paper, dev_paper
+    avg_paper = 0
+    num_paper = 0
+    thresh_num_paper = 0
+    paper_threshold = 4
+    @paper_hash.values.each do |v|
+      if v["paper"] > paper_threshold
+        avg_paper += v["paper"]
+        thresh_num_paper += 1
+      end
+      num_paper += 1
+    end
+    avg_paper = avg_paper / thresh_num_paper
+    var_paper = 0
+    paper_hash.values.each do |v|
+      if v["paper"] > paper_threshold
+        var_paper += (v["paper"] - avg_paper) ** 2
+      end
+    end
+    var_paper = var_paper / thresh_num_paper
+    dev_paper = Math::sqrt(var_paper)
+
+    # calc avg_remote_addr, var_remote_addr, dev_remote_addr
+    avg_remote_addr = 0
+    num_remote_addr = 0
+    thresh_num_remote_addr = 0
+    remote_addr_threshold = 4
+    remote_addr_hash.values.each do |v|
+      if v["remote_addr"] > remote_addr_threshold
+        avg_remote_addr += v["remote_addr"]
+        thresh_num_remote_addr += 1
+      end
+      num_remote_addr += 1
+    end
+    avg_remote_addr = avg_remote_addr / thresh_num_remote_addr
+    var_remote_addr = 0
+    remote_addr_hash.values.each do |v|
+      if v["remote_addr"] > remote_addr_threshold
+        var_remote_addr += (v["remote_addr"] - avg_remote_addr) ** 2
+      end
+    end
+    var_remote_addr = var_remote_addr / thresh_num_remote_addr
+    dev_remote_addr = Math::sqrt(var_remote_addr)
+    {@month => {
+        "paper" => paper_hash,
+        "avg_paper" => avg_paper,
+        "var_paper" => var_paper,
+        "dev_paper" => dev_paper,
+        "num_paper" => num_paper,
+        "thresh_num_paper" => thresh_num_paper,
+        #"paper" => @paper_hash,
+        "remote_addr" => remote_addr_hash,
+        "avg_remote_addr" => avg_remote_addr,
+        "var_remote_addr" => var_remote_addr,
+        "dev_remote_addr" => dev_remote_addr,
+        "num_remote_addr" => num_remote_addr,
+        "thresh_num_remote_addr" => thresh_num_remote_addr,
+        "num_bots" => @num_bots,
+        "num_others" => @num_others,
+        #"remote_addr" => @remote_addr_hash,
+        #"login" => @login_hash
+      }
+    }
+  end
 end
 
-def load_hash(filename)
-  paper_hash = {}
+def load_hash(config)
+  filename = "#{ROOT_PATH}/files/#{config["month_stats"]}"
+  log_hash = {}
   if !File.exist?(filename)
-    return paper_hash
+    return log_hash
   end
   open(filename) do |f|
-    # skip two lines (maybe changed)
-    f.readline
-    @lines = f.readlines
+    log_hash = YAML.load_file(filename)
   end
-  @lines.each do |line|
-    @columns = line.gsub(/\r*\n$/, "").split(", ")
-    paper_hash[@columns[0]] = @columns[1].to_i
-  end
-  paper_hash
+  log_hash
 end
 
-def save_hash(paper_hash, config)
+def save_hash(log_hash, config)
+  open("#{ROOT_PATH}/files/#{config["month_stats"]}", "w") do |file|
+    file.puts log_hash.to_yaml
+  end
+end
+
+# 689.6698924637 is determined by statistics of all paper and remote_addr data.
+MAX_PAPER_PER_MONTH = 689.6698924637
+def save_stat(log_hash, config)
+  paper_hash = {}
+  remote_addr_hash = {}
+  log_hash.sort.each do |k, hash|
+    hash["paper"].sort.each do |paper_id, entry|
+      if paper_hash[paper_id].nil?
+        paper_hash[paper_id] = {"paper" => entry["paper"],
+                                "remote_addr_uniq" => entry["remote_addr_uniq"],
+                                "remote_addr" => entry["remote_addr"]}
+      else
+        if entry["paper"] < MAX_PAPER_PER_MONTH
+          paper_hash[paper_id]["paper"] += entry["paper"]
+        else
+          paper_hash[paper_id]["paper"] += MAX_PAPER_PER_MONTH.to_i
+        end
+        paper_hash[paper_id]["remote_addr_uniq"] += entry["remote_addr_uniq"]
+        paper_hash[paper_id]["remote_addr"] += entry["remote_addr"]
+      end
+    end
+    hash["remote_addr"].sort.each do |remote_addr, entry|
+      if remote_addr_hash[remote_addr].nil?
+        remote_addr_hash[remote_addr] = {"remote_addr" => entry["remote_addr"],
+                                         "paper_uniq" => entry["paper_uniq"],
+                                         "paper" => entry["paper"]}
+      else
+        remote_addr_hash[remote_addr]["remote_addr"] += entry["remote_addr"]
+        remote_addr_hash[remote_addr]["paper_uniq"] += entry["paper_uniq"]
+        remote_addr_hash[remote_addr]["paper"] += entry["paper"]
+      end
+    end
+  end
+
+  # output paper rank
   open("#{ROOT_PATH}/files/#{config["output"]}", "w") do |file|
-    paper_hash.sort {|a,b| b[1] <=> a[1]}.each do |k, v|
-      file.puts "#{k},#{v}"
+    paper_hash.sort {|a,b| b[1]["paper"] <=> a[1]["paper"]}.each do |k,v|
+      file.puts "#{k.gsub("\.pdf", "")},#{v["paper"]}"
     end
   end
+
+  # output stats
+  #open("#{ROOT_PATH}/files/#{config["stats_output"]}", "w") do |file|
+  #  file.puts stats_hash.to_yaml
+  #end
+
+  # $stderr.puts "remote_addr_uniq / paper count ---"
+  # paper_hash.sort {|a,b| b[1]["remote_addr_uniq"] <=> a[1]["remote_addr_uniq"]}.each do |k,v|
+  #   $stderr.puts "#{k},#{v["remote_addr_uniq"]}"
+  # end
+  # $stderr.puts "remote_addr / paper count ---"
+  # paper_hash.sort {|a,b| b[1]["remote_addr"] <=> a[1]["remote_addr"]}.each do |k,v|
+  #   $stderr.puts "#{k},#{v["remote_addr"]}"
+  # end
+
+  # $stderr.puts "remote_addr count ---"
+  # remote_addr_hash.sort {|a,b| b[1]["remote_addr"] <=> a[1]["remote_addr"]}.each do |k,v|
+  #   $stderr.puts "#{k},#{v["remote_addr"]}"
+  # end
+
+  # $stderr.puts "paper_uniq / remote_addr count ---"
+  # remote_addr_hash.sort {|a,b| b[1]["paper_uniq"] <=> a[1]["paper_uniq"]}.each do |k,v|
+  #   $stderr.puts "#{k},#{v["paper_uniq"]}"
+  # end
+
+  # $stderr.puts "paper / remote_addr count ---"
+  # remote_addr_hash.sort {|a,b| b[1]["paper"] <=> a[1]["paper"]}.each do |k,v|
+  #   $stderr.puts "#{k},#{v["paper"]}"
+  # end
 end
 
-paper_hash = load_hash("#{ROOT_PATH}/files/#{config["output"]}")
+$log_hash = load_hash(config)
 Dir["#{ROOT_PATH}/files/#{config["log_files"]}"].each do |filename|
-  utf8_filename = "#{filename}-utf8"
-  log = AccessLogParser.new(utf8_filename)
+  log = AccessLogParser.new(filename)
   log.parse!
-  # 論文ごとの参照回数を出力
-  log.paper_hash.sort.each do |k, v|
-    # for debug
-    #$stderr.puts "#{k}\t#{v}"
-    if paper_hash[k].nil?
-      paper_hash[k] = v.size
-    else
-      paper_hash[k] += v.size
-    end
-  end
+  $log_hash = $log_hash.merge(log.month_stat)
   # 中断・再開できるように途中出力
-  save_hash(paper_hash, config)
+  save_hash($log_hash, config)
 end
 
-save_hash(paper_hash, config)
+save_stat($log_hash, config)

@@ -1,4 +1,7 @@
-#log_files: search_logs/search_log_201207.bak
+log_files: search_logs/search_log_201207.bak-utf8
 #log_files: search_logs/search_log_20120[67].bak
-log_files: search_logs/search_log_*.bak
+#log_files: search_logs/search_log_*.bak
+month_stats: month_stats.yml
+analyzed_month_stats: analyzed_stats
 output: downloads_count.txt
+stats_output: per_month_stats.yml

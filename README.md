@@ -4,7 +4,7 @@
 
 ## インストール方法
 
-本スクリプトは git コマンド，ruby (1.9.2以上)，sqlite3 (3.7i以上) を利用します．
+本スクリプトは git コマンド，ruby (1.9.2以上)，sqlite3 (3.7以上) を利用します．
 
 ### Windows 環境での RVM のセットアップ
 
@@ -23,9 +23,9 @@ http://www.cygwin.com/
 7. "Select Packages" では，必要なパッケージを指定します．RVM では，git, curl 等のコマンドラインツールを利用するので，以下の項目が有効になっているか（Skip ではなくバージョン番号が左端に表示されているか）確認してください．
 
 * Databases
-    * libsqlite3-devel
-    * libsqlite3_0
-    * sqlite3
+    * libsqlite3-devel (3.7.3)
+    * libsqlite3_0 (3.7.3)
+    * sqlite3 (3.7.3)
 * Devel
     * gcc
     * gcc-core
@@ -48,6 +48,8 @@ http://www.cygwin.com/
     * openssh
 * Utils
     * patch
+
+SQLite は最新の3.7.13ではなく，3.7.3をインストールしてください (2012-11現在)．3.7.13 では .import コマンドで " (doboule-quotes) の扱いが変わるため，データ中に " を含む場合，区切り文字 (Tab等) が正しく認識されなくなります．
 
 インストール完了後，Cygwin Terminal を実行します．
 
