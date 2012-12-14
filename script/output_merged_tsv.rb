@@ -12,7 +12,10 @@ ROOT_PATH = File.expand_path('../../',  __FILE__)
 tsv_config_path = "#{ROOT_PATH}/config/tsv_files.yml"
 db_config_path = "#{ROOT_PATH}/config/database.yml"
 
-if !File.exists?(db_config_path)
+if !File.exists?(tsv_config_path)
+  puts "can not find configuration file: #{tsv_config_path}"
+  exit 1
+elsif !File.exists?(db_config_path)
   puts "can not find configuration file: #{db_config_path}"
   exit 1
 end
@@ -43,12 +46,12 @@ when 'ja'
   $submissions = "ja_paper_submissions"
   $metadata = "ja_paper_metadata"
   $en_ja_metadata = "en_ja_paper_metadata"
-  $output_file = open("#{ROOT_PATH}/files/#{$tsv_config["tsv_tran_ja"]}_#{$date}.txt", "w")
-  $en_ja_output_file = open("#{ROOT_PATH}/files/#{$tsv_config["tsv_tran_en_ja"]}_#{$date}.txt", "w")
+  $output_file = open("#{ROOT_PATH}/files/#{$tsv_config["tsv_tran_ja"]}_#{$date}-with_comment.txt", "w")
+  $en_ja_output_file = open("#{ROOT_PATH}/files/#{$tsv_config["tsv_tran_en_ja"]}_#{$date}-with_comment.txt", "w")
 when 'en'
   $submissions = "en_paper_submissions"
   $metadata = "en_paper_metadata"
-  $output_file = open("#{ROOT_PATH}/files/#{$tsv_config["tsv_tran_en"]}_#{$date}.txt", "w")
+  $output_file = open("#{ROOT_PATH}/files/#{$tsv_config["tsv_tran_en"]}_#{$date}-with_comment.txt", "w")
 else
   error_and_exit
 end

@@ -154,14 +154,15 @@ $tsv_submissions.each do |tsv_submission|
       record = line.gsub(/\r*\n/, "").split("\t", columns).map{|i| i.gsub(/\t$/, "")}
       # debug
       if record[-1] =~ /\t/
-        output_error_msg(record, "#{columns} columns are assumed but we got #{columns + record[-1].split("\t").size - 1}", basename, line_num)
+        output_error_msg(record, "#{columns} columns are assumed but we got #{columns + record[-1].split("\t", columns).size - 1}", basename, line_num)
       end
       while record.size < columns
         # debug
         output_error_msg(record, "line is concatenated because record size (#{record.size}) is smaller than columns (#{columns})", basename, line_num)
         line = fr.readline
         record_tail = line.gsub(/\r*\n/, "").split("\t").map{|i| i.gsub(/\t$/, "")}
-        record = record + record_tail
+        record[-1] = record[-1] + record_tail[0]
+        record = record + record_tail[1..-1]
       end
       parse_volume1(record, fw, basename, line_num)
       line_num += 1
