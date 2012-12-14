@@ -29,7 +29,8 @@ create table ja_paper_metadata (
   err_1 varchar(128),
   err_2 varchar(128),
   recommend varchar(128),
-  footnote_err_pdf varchar(128)
+  footnote_err_pdf varchar(128),
+  publish_date varchar(128)
 );
 /* en_ja_paper_metadta の作成 */
 drop table en_ja_paper_metadata;
@@ -62,7 +63,8 @@ create table en_ja_paper_metadata (
   err_1 varchar(128),
   err_2 varchar(128),
   recommend varchar(128),
-  footnote_err_pdf varchar(128)
+  footnote_err_pdf varchar(128),
+  publish_date varchar(128)
 );
 /* en_paper_metadta の作成 */
 drop table en_paper_metadata;
@@ -95,5 +97,6 @@ create table en_paper_metadata (
   err_1 varchar(128),
   err_2 varchar(128),
   recommend varchar(128),
-  footnote_err_pdf varchar(128)
+  footnote_err_pdf varchar(128),
+  publish_date varchar(128)
 );

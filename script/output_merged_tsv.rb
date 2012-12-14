@@ -110,15 +110,20 @@ $db = SQLite3::Database.new("#{ROOT_PATH}/files/#{$db_config["paper_db"]}")
 
 def authors(metadata)
   return [] if metadata[15].nil?
-  metadata[15].gsub("　", " ").gsub(/\s+/, " ").split("＠")
+  metadata[15].gsub("　", " ").gsub(/\s+/, " ").split("＠").map{|name| normalize(name)}
 end
 
+# normalize names (both submissions and metadata)
+# examples:
+# Shingaku Tarou
+# Shingaku Comm Tarou
 def normalize(name)
   names = name.split(" ").map {|s| s.capitalize}
   # if name is empty (""), return itself ("").
   if names[-1].nil?
     return name
   end
+  # if you want to normalize like "Shingaku TAROU", uncomment the followings.
   names[-1] = names[-1].upcase
   names.join(" ")
 end

@@ -235,7 +235,9 @@ class AccessLogParser < DataParser
         if is_bot?
           @num_bots += 1
           next
-        elsif @record.paper_id !~ /\.pdf$/ || @record.paper_id =~ /\_000\.pdf$/ || @record.err != "1" || @record.summary_view == "1"
+        elsif @record.paper_id !~ /[ej]\d{2}-[a-d]_\d+_\d+\.pdf$/ || @record.paper_id =~ /\_000\.pdf$/ || @record.err != "1" || @record.summary_view == "1"
+          # to skip entries like j94-b_2_156_seigo.pdf and e88-b_3_1294year=2005
+          # specify filename pattern more strictly
           @num_others += 1
           next
         end
