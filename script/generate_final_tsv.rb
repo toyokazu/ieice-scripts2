@@ -4,7 +4,7 @@ require 'yaml'
 require 'sqlite3'
 
 # usage:
-# generate_final_tsv.rb ja 2> logs/final_tsv.txt
+# generate_final_tsv.rb 2> logs/final_tsv.txt
 
 ROOT_PATH = File.expand_path('../../',  __FILE__)
 
@@ -39,10 +39,17 @@ files.each do |filename|
     next
   end
   open("#{filename}-with_comment.txt") do |fr|
-    line = fr.readline
-    record = line.gsub(/\r*\n/, "").split("\t", columns).map{|i| i.gsub(/\t$/, "")}
     open("#{filename}.txt", "w") do |fw|
-      fw.puts record[0..-2].join("\t")
+      begin
+        while true
+          line = fr.readline
+          record = line.gsub(/\r*\n/, "").split("\t", columns).map{|i| i.gsub(/\t$/, "")}
+          fw.puts record[0..-2].join("\t")
+        end
+      rescue EOFError => e
+      rescue => e
+        $stderr.puts e.message
+      end
     end
   end
 end
