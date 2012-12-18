@@ -18,7 +18,7 @@ $SCRIPT_PATH/clear_databases.sh
 $SCRIPT_PATH/import_databases.sh $1 2> $IMPORT_LOG_UNIX
 $SCRIPT_PATH/output_merged_tsv.rb ja $1 2> $JA_LOG_UNIX
 $SCRIPT_PATH/output_merged_tsv.rb en $1 2> $EN_LOG_UNIX
-$SCRIPT_PATH/nkf.rb -Ws $IMPORT_LOG_UNIX > $IMPORT_LOG_WIN
-$SCRIPT_PATH/nkf.rb -Ws $JA_LOG_UNIX > $JA_LOG_WIN
-$SCRIPT_PATH/nkf.rb -Ws $EN_LOG_UNIX > $EN_LOG_WIN
+$SCRIPT_PATH/nkf.rb -WsLw $IMPORT_LOG_UNIX > $IMPORT_LOG_WIN
+$SCRIPT_PATH/nkf.rb -WsLw $JA_LOG_UNIX > $JA_LOG_WIN
+$SCRIPT_PATH/nkf.rb -WsLw $EN_LOG_UNIX > $EN_LOG_WIN
 
