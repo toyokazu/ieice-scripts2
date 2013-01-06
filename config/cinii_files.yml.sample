@@ -1,0 +1,4 @@
+cinii_files: cinii/NII/*/bib
+tsv_tran_ja: "tran_ja"
+tsv_tran_en_ja: "tran_en_ja"
+tsv_tran_en: "tran_en"

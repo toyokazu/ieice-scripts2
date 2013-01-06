@@ -1,0 +1,31 @@
+/* cinii_metadata の作成 */
+drop table cinii_metadata;
+create table cinii_metadata (
+  id varchar(32),
+  vol varchar(10),
+  publish_date varchar(256),
+  type_sym varchar(4),
+  title_j varchar(256),
+  title_jr varchar(256),
+  title_e varchar(256),
+  author_j varchar(512),
+  author_jr varchar(512),
+  author_e varchar(512),
+  org_j varchar(512),
+  org_e varchar(512),
+  pages varcahr(32),
+  type_name_j varchar(32),
+  type_name_e varchar(32),
+  lang varchar(16),
+  abstract_j varchar(2048),
+  abstract_e varchar(2048),
+  keyword_j varchar(512),
+  keyword_e varchar(512),
+  presen_num varchar(16),
+  pdf_name varchar(256),
+  uri varchar(256),
+  disp_order integer,
+  file_name varchar(256),
+  del_flag varchar(16),
+  paper_id varchar(32)
+);

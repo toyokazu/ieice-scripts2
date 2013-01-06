@@ -113,10 +113,10 @@ def output_with_paper_id(file, record, paper_id)
 end
 
 def parse_volume1(record, file, basename, line_num)
-  record[11] =~ /Vol.(\w+\d+\-\w+(\-I+)*)\s*,*\s*No.(\d+)\s*,*\s*/
+  record[11] =~ /Vol.(\w+\-\w+(\-I+)*)\s*,*\s*No.(\d+)\s*,*\s*/
   vol = $1
   no = $3
-  record[11] =~ /Vol.\w+\d+\-\w+(\-I+)*\s*,*\s*No.\d+\s*,*\s*pp.(\d+)-(\d+)/
+  record[11] =~ /Vol.\w+\-\w+(\-I+)*\s*,*\s*No.\d+\s*,*\s*pp.(\d+)-(\d+)/
   ps = $2
   pe = $3
   if vol.nil?
