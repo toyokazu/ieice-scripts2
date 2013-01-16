@@ -140,10 +140,10 @@ end
 def cinii_authors(cinii_metadata, target = $target)
   case target
   when 'ja'
-    cinii_authors = cinii_metadata[7].split(/\s*\/\s*/).map {|s| normalize(s.gsub(",", " "))}
+    cinii_authors = cinii_metadata[7].split(/\s*\/\s*/).map {|s| normalize(s.gsub("\"","").gsub(",", " "))}
   when 'en'
     # english names in CiNii is reverse order to IEICE
-    cinii_authors = cinii_metadata[9].split(/\s*\/\s*/).map {|s| normalize(s.split(",").reverse.join(" "))}
+    cinii_authors = cinii_metadata[9].split(/\s*\/\s*/).map {|s| normalize(s.gsub("\"","").split(",").reverse.join(" "))}
   end
   cinii_authors
 end
@@ -152,9 +152,9 @@ def cinii_orgnames(cinii_metadata, target = $target)
   cinii_orgnames = []
   case target
   when 'ja'
-    cinii_orgnames = cinii_metadata[10].split(/\s*\/\s*/)
+    cinii_orgnames = cinii_metadata[10].gsub("\"", "").split(/\s*\/\s*/)
   when 'en'
-    cinii_orgnames = cinii_metadata[11].split(/\s*\/\s*/)
+    cinii_orgnames = cinii_metadata[11].gsub("\"", "").split(/\s*\/\s*/)
   end
   cinii_orgnames
 end
