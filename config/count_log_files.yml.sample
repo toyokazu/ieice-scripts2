@@ -1,8 +1,12 @@
-log_files: search_logs/search_log_201207.bak-utf8
+#log_files: no_file
+#log_files: search_logs/search_log_201207.bak-utf8
 #log_files: search_logs/search_log_20120[67].bak
+log_files: search_logs/log-201208-201301/search_log_*.bak
 #log_files: search_logs/search_log_*.bak-utf8
+#log_files: search_logs/search_log_*.bak
+#month_stats: month_stats-tmp.yml
 month_stats: month_stats.yml
-analyzed_month_stats: analyzed_stats
+month_stats_db: month_stats.db
 output: download_count.csv
 #output: downloads_count.txt
 #stats_output: per_month_stats.yml

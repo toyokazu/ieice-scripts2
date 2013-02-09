@@ -17,6 +17,7 @@ config = YAML.load_file(config_path)
 #
 # ---
 # log_files: search_logs/search_log_*.bak
+# month_stats: month_stats.yml
 # output: downloads_count.txt
 # ---
 #
@@ -206,11 +207,10 @@ class AccessLogParser < DataParser
   # % grep e92-b_9_2773.pdf files/search_logs/search_log_201104.bak-utf8 | grep 202.115.65.119 | wc
   # 10277  308308 3174459
   def is_bot?
-    if @record.user_agent =~ /bot\// || @record.user_agent =~ /spider/ ||
-      @record.user_agent =~ /robot/ || @record.user_agent =~ /Crawler/ ||
-      @record.user_agent =~ /crawler/ || @record.user_agent =~ /Yeti\// ||
-      @record.user_agent =~ /bot-Mobile/ || @record.user_agent =~ /Bot\// ||
-      @record.user_agent =~ /Spider/ || @record.user_agent =~ /Slurp\//
+    if @record.user_agent =~ /[Bb]ot\// || @record.user_agent =~ /[Ss]pider/ ||
+      @record.user_agent =~ /[Rr]obot/ || @record.user_agent =~ /[Cc]rawler/ ||
+      @record.user_agent =~ /Blekkobot/ || @record.user_agent =~ /Yeti\// ||
+      @record.user_agent =~ /bot-Mobile/ || @record.user_agent =~ /Slurp\//
       return true
     end
     false
@@ -468,7 +468,7 @@ end
 
 $log_hash = load_hash(config)
 Dir["#{ROOT_PATH}/files/#{config["log_files"]}"].each do |filename|
-  log = AccessLogParser.new(filename)
+  log = AccessLogParser.new("#{filename}-utf8")
   log.parse!
   $log_hash = $log_hash.merge(log.month_stat)
   # 中断・再開できるように途中出力

@@ -154,7 +154,7 @@ RVM が依存するパッケージをインストールします．
 
 この変換処理は preproc.rb の処理に含まれています．preproc.rb は import_databases.rb または import_databases.sh から呼び出されます．
 
-変換する対象ファイル名 (wabun-X_YYYYMMDD.txt, trans-X_YYYYMMDD.txt) については，config/preproc.yml に指定します．config/preproc.yml.sample をコピーして利用してください．postfix (YYYYMMDD) についてはコマンド実行時に自動的に実行日時の値（例: 20121214) が付与されます．明示的に postfix を指定したい場合は，コマンドの後ろに YYYYMMDD を指定してください．
+変換する対象ファイル名 (wabun-X_YYYYMMDD.txt, trans-X_YYYYMMDD.txt) については，config/tsv_files.yml から読み出されます．postfix (YYYYMMDD) についてはコマンド実行時に自動的に実行日時の値（例: 20121214) が付与されます．明示的に postfix を指定したい場合は，コマンドの後ろに YYYYMMDD を指定してください．
 
 準備ができたら，以下のようにコマンドを実行します．
 
@@ -318,10 +318,11 @@ TSV ファイルのまま入力ファイルを分析し，結果を CSV 形式�
 
     % cp ./config/count_log_files.yml.sample ./config/count_log_files.yml
     % vi ./config/count_log_files.yml
-    log_files: search_logs/search_log_*.bak
-    output: downloads_count.txt
+    log_files: search_logs/search_log_*.bak-utf8
+    month_stats: month_stats.yml
+    output: download_count.csv
 
-log_files で入力となるログファイル群を指定し，output で出力ファイル名を指定します．入力ファイルの指定にはワイルドカードなど，Ruby の Dir クラスで利用可能なパターン指定が利用できます．
+log_files で入力となるログファイル群を指定し，output で出力ファイル名を指定します．month_stats は中間出力ファイルで，前回分析した結果の続きから分析できます．入力ファイルの指定にはワイルドカードなど，Ruby の Dir クラスで利用可能なパターン指定が利用できます．
 
 class Dir
 http://doc.ruby-lang.org/ja/1.9.3/class/Dir.html
@@ -363,7 +364,7 @@ http://doc.ruby-lang.org/ja/1.9.3/class/Dir.html
 #### 出力フォーマット (カンマ区切り)
 
     論文ファイル, 参照回数
-    j80-b_1_1.pdf, 1351
+    j80-b_1_1.pdf,1351
 
 ## License (MIT License)
 Copyright (C) 2012 by Toyokazu Akiyama.
