@@ -4,7 +4,7 @@ require 'yaml'
 require 'fileutils'
 
 def error_and_exit
-  $stderr.puts "usage: fix_paper_metadata.rb input_file_name"
+  $stderr.puts "usage: fix_paper_metadata.rb input_file_name [30columns]"
   exit 1
 end
 
@@ -46,6 +46,7 @@ end
 
 $filename = ARGV[0]
 $line_num = 0
+$col30 = (ARGV[1] == "true")
 
 def output_error_msg(record, message)
   $stderr.puts "#{message} @#{record[0]}, file: #{$filename}, line: #{$line_num}"
@@ -59,7 +60,7 @@ open($filename) do |f|
       record = line.gsub(/\r*\n/, "").split("\t", 30).map{|i| i.gsub(/\t$/, "")}
       if record.size == 29
         $stdout.puts "#{record.join("\t")}\t"
-      elsif record.size == 30
+      elsif record.size == 30 && $col30
         $stdout.puts record.join("\t")
       else
         output_error_msg(record, "The number of columns is assumed to be 29 or 30, but #{record.size}.")
